@@ -23,6 +23,11 @@ const DEG_FORMATTER = Intl.NumberFormat("de-DE", {
 
 const LOCATION_ID = "location";
 const CAMERA_INPUT_ID = "camera";
+const MAP_ID = "map";
+const FOOTER_ID = "footer";
+const VIDEO_ID = "video";
+const CANVAS_ID = "canvas";
+const PHOTO_ID = "photo";
 
 // location updates using the Geolocation API
 var geolocation;
@@ -34,11 +39,11 @@ const watchID = navigator.geolocation.watchPosition(locate, handleErr);
 
 function locate(position) {
   //the time at which the location was retrieved
-  console.debug(position.timestamp);
+  //   console.debug(position.timestamp);
 
   //the geographic position in degrees
   const c = position.coords;
-  console.debug(`my position: lat=${c.latitude} lng=${c.longitude}`);
+  //   console.debug(`my position: lat=${c.latitude} lng=${c.longitude}`);
 
   updatePosition({
     coords: {
@@ -80,7 +85,7 @@ function configureMap(latLngArray) {
   if (isTouchDevice()) {
     map.removeControl(map.zoomControl);
   }
-  map.attributionControl.setPosition("bottomleft");
+  map.attributionControl.setPosition("bottomright");
 
   L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
     maxZoom: 19,
@@ -94,7 +99,7 @@ function updatePosition(position) {
   const locatorDiv = document.getElementById(LOCATION_ID);
 
   const coords = position.coords;
-  console.debug("got new coordinates:", coords);
+  //   console.debug("got new coordinates:", coords);
   locatorDiv.innerHTML = `
     <dl>
         <dt>LAT</dt>
@@ -129,19 +134,70 @@ function updatePosition(position) {
     });
     locationMarker = L.marker(ll, { icon: icon }).addTo(map);
     locationMarker.bindPopup("You are here!");
-    console.debug("initialising locationMarker", ll);
+    // console.debug("initialising locationMarker", ll);
   } else {
     locationMarker.setLatLng(ll);
-    console.debug("updating position", ll);
+    // console.debug("updating position", ll);
+  }
+}
+
+var streaming = false;
+
+function adjustAspectRations(event) {
+  console.debug("event fired:", event);
+
+  let width = 320;
+  let video = document.getElementById(VIDEO_ID);
+  let canvas = document.getElementById(CANVAS_ID);
+
+  //perform a one-time adjustment of video's and photo's aspect ratio
+  if (!streaming) {
+    height = (video.videoHeight / video.videoWidth) * width;
+    if (isNaN(height)) {
+      height = (width * 3.0) / 4.0;
+    }
+
+    video.setAttribute("width", width);
+    video.setAttribute("height", height);
+    canvas.setAttribute("width", width);
+    canvas.setAttribute("height", height);
+    streaming = true;
   }
 }
 
 /* setup component */
 window.onload = () => {
+  document.getElementById(VIDEO_ID).style.display = "none";
+  document.getElementById(CANVAS_ID).style.display = "none";
+  document.getElementById(PHOTO_ID).style.display = "none";
   const cameraButton = document.getElementById(CAMERA_INPUT_ID);
 
   //setup UI
   cameraButton.src = cameraImage;
+
+  cameraButton.onclick = () => {
+    document.getElementById(MAP_ID).style.display = "none";
+    document.getElementById(FOOTER_ID).style.display = "none";
+    document.getElementById(PHOTO_ID).style.display = "block";
+
+    let video = document.getElementById(VIDEO_ID);
+    video.style.display = "block";
+    video.addEventListener("canplay", adjustAspectRations);
+
+    let canvas = document.getElementById(CANVAS_ID);
+    canvas.style.display = "block";
+
+    //start video playback
+    navigator.mediaDevices
+      .getUserMedia({ video: true, audio: false })
+      .then((stream) => {
+        video.srcObject = stream;
+        video.play();
+      })
+      .catch((err) => {
+        console.error(`An error occurred: ${err}`);
+      });
+  };
 
   //init leaflet
   configureMap([47.406653, 9.744844]);
@@ -150,15 +206,15 @@ window.onload = () => {
   // updatePosition({ coords: { latitude: 47.406653, longitude: 9.744844, altitude: 440, accuracy: 40, heading: 45, speed: 1.8 } });
 
   // setup service worker
-  // if ('serviceWorker' in navigator) {
-  //     navigator.serviceWorker.register(
-  //         new URL('serviceworker.js', import.meta.url),
-  //         { type: 'module' }
-  //     ).then(() => {
-  //         console.log('Service worker registered!');
-  //     }).catch((error) => {
-  //         console.warn('Error registering service worker:');
-  //         console.warn(error);
-  //     });
-  // }
+  //   if ('serviceWorker' in navigator) {
+  //       navigator.serviceWorker.register(
+  //           new URL('serviceworker.js', import.meta.url),
+  //           { type: 'module' }
+  //       ).then(() => {
+  //           console.log('Service worker registered!');
+  //       }).catch((error) => {
+  //           console.warn('Error registering service worker:');
+  //           console.warn(error);
+  //       });
+  //   }
 };
