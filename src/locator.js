@@ -1,4 +1,6 @@
 import cameraImage from "./camera.svg";
+import playImage from "./play-btn.svg";
+import pauseImage from "./pause-btn.svg";
 import locationIcon from "./icons/location.png";
 
 const COORD_FORMATTER = Intl.NumberFormat("de-DE", {
@@ -23,6 +25,8 @@ const DEG_FORMATTER = Intl.NumberFormat("de-DE", {
 
 const LOCATION_ID = "location";
 const CAMERA_INPUT_ID = "camera";
+const PLAY_INPUT_ID = "play";
+const PAUSE_INPUT_ID = "pause";
 const MAP_ID = "map";
 const FOOTER_ID = "footer";
 const VIDEO_ID = "video";
@@ -143,12 +147,11 @@ function updatePosition(position) {
 
 var streaming = false;
 
-function adjustAspectRations(event) {
-  console.debug("event fired:", event);
-
+function adjustAspectRatios(event) {
   let width = 320;
-  let video = document.getElementById(VIDEO_ID);
-  let canvas = document.getElementById(CANVAS_ID);
+  let height = 0;
+  const video = document.getElementById(VIDEO_ID);
+  const canvas = document.getElementById(CANVAS_ID);
 
   //perform a one-time adjustment of video's and photo's aspect ratio
   if (!streaming) {
@@ -156,13 +159,40 @@ function adjustAspectRations(event) {
     if (isNaN(height)) {
       height = (width * 3.0) / 4.0;
     }
-
     video.setAttribute("width", width);
     video.setAttribute("height", height);
     canvas.setAttribute("width", width);
     canvas.setAttribute("height", height);
     streaming = true;
   }
+}
+
+function pauseVideoAndTakePicture(event) {
+    const video = document.getElementById(VIDEO_ID);
+    const photo = document.getElementById(PHOTO_ID);
+    const canvas = document.getElementById(CANVAS_ID);
+    const pauseButton = document.getElementById(PAUSE_INPUT_ID);
+    const playButton = document.getElementById(PLAY_INPUT_ID);
+
+    video.pause();
+
+    const context = canvas.getContext('2d');
+    context.drawImage(video, 0, 0, video.width, video.height);
+    imageData = canvas.toDataURL('image/jpeg');
+    photo.setAttribute('src', imageData);
+
+    pauseButton.style.display = "none";
+    playButton.style.display = "block";
+}
+
+function playVideo(event) {
+    const video = document.getElementById(VIDEO_ID);
+    const pauseButton = document.getElementById(PAUSE_INPUT_ID);
+    const playButton = document.getElementById(PLAY_INPUT_ID);
+
+    video.play();
+    pauseButton.style.display = "block";
+    playButton.style.display = "none";
 }
 
 /* setup component */
@@ -178,14 +208,19 @@ window.onload = () => {
   cameraButton.onclick = () => {
     document.getElementById(MAP_ID).style.display = "none";
     document.getElementById(FOOTER_ID).style.display = "none";
-    document.getElementById(PHOTO_ID).style.display = "block";
 
-    let video = document.getElementById(VIDEO_ID);
+    const pauseButton = document.getElementById(PAUSE_INPUT_ID);
+    pauseButton.src = pauseImage;
+    pauseButton.onclick = pauseVideoAndTakePicture;
+
+    const playButton = document.getElementById(PLAY_INPUT_ID);
+    playButton.src = playImage;
+    playButton.onclick = playVideo;
+    playButton.style.display = "none";
+
+    const video = document.getElementById(VIDEO_ID);
     video.style.display = "block";
-    video.addEventListener("canplay", adjustAspectRations);
-
-    let canvas = document.getElementById(CANVAS_ID);
-    canvas.style.display = "block";
+    video.addEventListener("canplay", adjustAspectRatios);
 
     //start video playback
     navigator.mediaDevices
