@@ -82,3 +82,75 @@ input#camera {
 input#camera:disabled {
     filter: opacity(0.50);
 }
+
+input#save {
+    width: 18px;
+    height: 18px;
+    padding: 4px;
+}
+
+input#save:disabled {
+    filter: opacity(0.50);
+}
+
+input#play {
+    width: 18px;
+    height: 18px;
+    padding: 4px;
+}
+
+input#pause {
+    width: 18px;
+    height: 18px;
+    padding: 4px;
+}
+
+input#cancel {
+    width: 18px;
+    height: 18px;
+    padding: 4px;
+}
+
+#video {
+    margin-top: 20px;
+    display: block;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+#btn-panel {
+    text-align: center
+}
+
+.leaflet-popup-content-wrapper {
+    padding: 0px;
+}
+
+.leaflet-popup-content {
+    padding: 0px;
+    margin: 0px;
+}
+
+.popup-image-container {
+    position: relative;
+    width: 320px;
+    height: 240px;
+    border-radius: 5px;
+}
+
+.popup-image {
+    max-width: 100%;
+    border-radius: 5px;
+}
+
+.popup-text-overlay {
+    position: absolute;
+    bottom: 0px;
+    left: 50%;
+    width: fit-content;
+    transform: translate(-50%, 0);
+    color: black;
+    background-color: rgb(255, 255, 255);
+    opacity: 50%;
+    padding: 4px;
+}

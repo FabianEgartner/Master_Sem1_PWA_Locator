@@ -4,6 +4,7 @@ import pauseImage from "./pause-btn.svg";
 import saveImage from "./save.svg";
 import cancelImage from "./x-circle.svg";
 import locationIcon from "./icons/location.png";
+import ArrowUpCircle from "./arrow-up-circle.svg";
 
 const COORD_FORMATTER = Intl.NumberFormat("de-DE", {
   minimumFractionDigits: 6,
@@ -51,7 +52,6 @@ function locate(position) {
 
   //the geographic position in degrees
   const c = position.coords;
-  //   console.debug(`my position: lat=${c.latitude} lng=${c.longitude}`);
 
   updatePosition({
     coords: {
@@ -107,7 +107,6 @@ function updatePosition(position) {
   const locatorDiv = document.getElementById(LOCATION_ID);
 
   const coords = position.coords;
-  //   console.debug("got new coordinates:", coords);
   locatorDiv.innerHTML = `
     <dl>
         <dt>LAT</dt>
@@ -134,25 +133,23 @@ function updatePosition(position) {
   ranger.setRadius(coords.accuracy);
 
   if (!locationMarker) {
-    // add marker for representing the current position
+    // add marker that represents the current position
     const icon = L.icon({
       iconUrl: locationIcon,
       iconSize: [24, 24], // Size of the icon in pixels
       iconAnchor: [12, 16], // The point of the icon that corresponds to the marker's location
     });
     locationMarker = L.marker(ll, { icon: icon }).addTo(map);
-    locationMarker.bindPopup("You are here!");
-    // console.debug("initialising locationMarker", ll);
+    locationMarker.bindPopup("<p style='padding: 2px'>You are here!</p>");
   } else {
     locationMarker.setLatLng(ll);
-    // console.debug("updating position", ll);
   }
 }
 
 var streaming = false;
 
 function adjustAspectRatios(event) {
-  let width = 320;
+  let width = 960;
   let height = 0;
   const video = document.getElementById(VIDEO_ID);
   const canvas = document.getElementById(CANVAS_ID);
@@ -165,6 +162,7 @@ function adjustAspectRatios(event) {
     }
     video.setAttribute("width", width);
     video.setAttribute("height", height);
+    video.setAttribute("position", "center");
     canvas.setAttribute("width", width);
     canvas.setAttribute("height", height);
     streaming = true;
@@ -177,6 +175,7 @@ function pauseVideoAndTakePicture(event) {
   const canvas = document.getElementById(CANVAS_ID);
   const pauseButton = document.getElementById(PAUSE_INPUT_ID);
   const playButton = document.getElementById(PLAY_INPUT_ID);
+  const saveButton = document.getElementById(SAVE_INPUT_ID);
 
   video.pause();
 
@@ -187,16 +186,19 @@ function pauseVideoAndTakePicture(event) {
 
   pauseButton.style.display = "none";
   playButton.style.display = "inline";
+  saveButton.disabled = false;
 }
 
 function playVideo(event) {
   const video = document.getElementById(VIDEO_ID);
   const pauseButton = document.getElementById(PAUSE_INPUT_ID);
   const playButton = document.getElementById(PLAY_INPUT_ID);
+  const saveButton = document.getElementById(SAVE_INPUT_ID);
 
   video.play();
   pauseButton.style.display = "inline";
   playButton.style.display = "none";
+  saveButton.disabled = true;
 }
 
 function loadCameraPage(event) {
@@ -216,14 +218,13 @@ function loadCameraPage(event) {
   const saveButton = document.getElementById(SAVE_INPUT_ID);
   saveButton.src = saveImage;
   saveButton.style.display = "inline";
-  saveButton.onclick = () => {
-    console.debug("save clicked");
-  };
+  saveButton.disabled = true;
+  saveButton.onclick = setImageMarkerAndLoadStartPage;
 
   const cancelButton = document.getElementById(CANCEL_INPUT_ID);
   cancelButton.src = cancelImage;
   cancelButton.style.display = "inline";
-  cancelButton.onclick = loadStartPage
+  cancelButton.onclick = loadStartPage;
 
   const video = document.getElementById(VIDEO_ID);
   video.style.display = "block";
@@ -241,16 +242,38 @@ function loadCameraPage(event) {
     });
 }
 
+function setImageMarkerAndLoadStartPage() {
+  const photo = document.getElementById(PHOTO_ID);
+  const ll = [locationMarker.getLatLng().lat, locationMarker.getLatLng().lng];
+  const icon = L.icon({
+    iconUrl: ArrowUpCircle,
+    iconSize: [24, 24], // Size of the icon in pixels
+    iconAnchor: [12, 16], // The point of the icon that corresponds to the marker's location
+  });
+  imageMarker = L.marker(ll, { icon: icon }).addTo(map);
+  data = photo.getAttribute("src");
+  imageMarker.bindPopup(
+    `
+    <div class="popup-image-container">
+        <img class="popup-image" src=${photo.getAttribute("src")} alt="Image">
+        <div class="popup-text-overlay">
+          ${COORD_FORMATTER.format(ll[0])} ${COORD_FORMATTER.format(ll[1])}
+        </div>
+    </div>
+    `
+  );
+  loadStartPage();
+}
+
 function loadStartPage() {
-    document.getElementById(MAP_ID).style.display = "block";
-    document.getElementById(FOOTER_ID).style.display = "flex";
+  document.getElementById(MAP_ID).style.display = "block";
+  document.getElementById(FOOTER_ID).style.display = "flex";
 
-    document.getElementById(VIDEO_ID).style.display = "none";
-    document.getElementById(PLAY_INPUT_ID).style.display = "none";
-    document.getElementById(PAUSE_INPUT_ID).style.display = "none";
-    document.getElementById(SAVE_INPUT_ID).style.display = "none";
-    document.getElementById(CANCEL_INPUT_ID).style.display = "none";
-
+  document.getElementById(VIDEO_ID).style.display = "none";
+  document.getElementById(PLAY_INPUT_ID).style.display = "none";
+  document.getElementById(PAUSE_INPUT_ID).style.display = "none";
+  document.getElementById(SAVE_INPUT_ID).style.display = "none";
+  document.getElementById(CANCEL_INPUT_ID).style.display = "none";
 }
 
 /* setup component */
@@ -261,7 +284,7 @@ window.onload = () => {
 
   const cameraButton = document.getElementById(CAMERA_INPUT_ID);
   cameraButton.src = cameraImage;
-  cameraButton.onclick = loadCameraPage
+  cameraButton.onclick = loadCameraPage;
 
   //init leaflet
   configureMap([47.406653, 9.744844]);
