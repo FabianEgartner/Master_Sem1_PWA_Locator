@@ -149,7 +149,7 @@ function updatePosition(position) {
 var streaming = false;
 
 function adjustAspectRatios(event) {
-  let width = 960;
+  let width = 640;
   let height = 0;
   const video = document.getElementById(VIDEO_ID);
   const canvas = document.getElementById(CANVAS_ID);
