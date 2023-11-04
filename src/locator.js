@@ -79,6 +79,7 @@ document.addEventListener("beforeunload", (event) => {
 var map;
 var ranger;
 var locationMarker;
+var images = [];
 
 function isTouchDevice() {
   return (
@@ -138,11 +139,11 @@ function updatePosition(position) {
     // add marker that represents the current position
     const icon = L.icon({
       iconUrl: locationIcon,
-      iconSize: [24, 24], // Size of the icon in pixels
-      iconAnchor: [12, 16], // The point of the icon that corresponds to the marker's location
+      iconSize: [20, 20], // Size of the icon in pixels
+      iconAnchor: [10, 16], // The point of the icon that corresponds to the marker's location
     });
     locationMarker = L.marker(ll, { icon: icon }).addTo(map);
-    locationMarker.bindPopup("<p style='padding: 2px'>You are here!</p>");
+    // locationMarker.bindPopup("<p style='padding: 2px'>You are here!</p>");
   } else {
     locationMarker.setLatLng(ll);
   }
@@ -250,10 +251,16 @@ function setImageMarkerAndLoadStartPage() {
   });
   imageMarker = L.marker(ll, { icon: icon }).addTo(map);
   data = photo.getAttribute("src");
+  
+  let image = {image: data, location: ll} 
+  images.push(image);
+  console.debug("her her", images)
+  localStorage.setItem("photos", JSON.stringify(images));
+
   imageMarker.bindPopup(
     `
     <div class="popup-image-container">
-        <img class="popup-image" src=${photo.getAttribute("src")} alt="Image">
+        <img class="popup-image" src="${photo.getAttribute("src")}" alt="Image">
         <div class="popup-text-overlay">
           ${COORD_FORMATTER.format(ll[0])} ${COORD_FORMATTER.format(ll[1])}
         </div>
@@ -280,26 +287,58 @@ window.onload = () => {
   document.getElementById(CANVAS_ID).style.display = "none";
   document.getElementById(PHOTO_ID).style.display = "none";
 
+  //init leaflet
+  configureMap([47.406653, 9.744844]);
+
+  let photos = localStorage.getItem("photos") ? JSON.parse(localStorage.getItem("photos")) : [];
+  images = photos;
+  const icon = L.icon({
+    iconUrl: ArrowUpCircle,
+    iconSize: [24, 24], // Size of the icon in pixels
+    iconAnchor: [12, 16], // The point of the icon that corresponds to the marker's location
+  });
+
+  for (const photo of photos) {
+    m = L.marker(photo.location, { icon: icon }).addTo(map);
+    m.bindPopup(
+      `
+      <div class="popup-image-container">
+          <img class="popup-image" src="${photo.image}" alt="Image">
+          <div class="popup-text-overlay">
+            ${COORD_FORMATTER.format(photo.location[0])} ${COORD_FORMATTER.format(photo.location[1])}
+          </div>
+      </div>
+      `
+    );
+    // m.bindPopup(
+    //   `
+    //   <div class="popup-image-container">
+    //       <img class="popup-image" src="${photo.image}" alt="Image">
+    //       <div class="popup-text-overlay">
+    //         ${COORD_FORMATTER.format(photo.location[0])} ${COORD_FORMATTER.format(photo.location[1])}
+    //       </div>
+    //   </div>
+    //   `
+    // );
+  }
+
   const cameraButton = document.getElementById(CAMERA_INPUT_ID);
   cameraButton.src = cameraImage;
   cameraButton.onclick = loadCameraPage;
-
-  //init leaflet
-  configureMap([47.406653, 9.744844]);
 
   //init footer
   // updatePosition({ coords: { latitude: 47.406653, longitude: 9.744844, altitude: 440, accuracy: 40, heading: 45, speed: 1.8 } });
 
   // setup service worker
-  //   if ('serviceWorker' in navigator) {
-  //       navigator.serviceWorker.register(
-  //           new URL('serviceworker.js', import.meta.url),
-  //           { type: 'module' }
-  //       ).then(() => {
-  //           console.log('Service worker registered!');
-  //       }).catch((error) => {
-  //           console.warn('Error registering service worker:');
-  //           console.warn(error);
-  //       });
-  //   }
+    if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.register(
+            new URL('serviceworker.js', import.meta.url),
+            { type: 'module' }
+        ).then(() => {
+            console.log('Service worker registered!');
+        }).catch((error) => {
+            console.warn('Error registering service worker:');
+            console.warn(error);
+        });
+    }
 };
