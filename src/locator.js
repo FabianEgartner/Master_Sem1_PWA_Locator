@@ -38,7 +38,6 @@ const VIDEO_ID = "video";
 const CANVAS_ID = "canvas";
 const PHOTO_ID = "photo";
 
-// location updates using the Geolocation API
 var geolocation;
 if ("geolocation" in navigator) {
   geolocation = navigator.geolocation;
@@ -47,10 +46,6 @@ if ("geolocation" in navigator) {
 const watchID = navigator.geolocation.watchPosition(locate, handleErr);
 
 function locate(position) {
-  //the time at which the location was retrieved
-  //   console.debug(position.timestamp);
-
-  //the geographic position in degrees
   const c = position.coords;
 
   updatePosition({
@@ -75,7 +70,7 @@ document.addEventListener("beforeunload", (event) => {
   }
 });
 
-//map state
+// map state
 var map;
 var ranger;
 var locationMarker;
@@ -106,7 +101,6 @@ function configureMap(latLngArray) {
 
 function updatePosition(position) {
   const locatorDiv = document.getElementById(LOCATION_ID);
-
   const coords = position.coords;
   locatorDiv.innerHTML = `
     <dl>
@@ -136,14 +130,12 @@ function updatePosition(position) {
   ranger.setRadius(coords.accuracy);
 
   if (!locationMarker) {
-    // add marker that represents the current position
     const icon = L.icon({
       iconUrl: locationIcon,
-      iconSize: [20, 20], // Size of the icon in pixels
-      iconAnchor: [10, 16], // The point of the icon that corresponds to the marker's location
+      iconSize: [20, 20],
+      iconAnchor: [10, 16],
     });
     locationMarker = L.marker(ll, { icon: icon }).addTo(map);
-    // locationMarker.bindPopup("<p style='padding: 2px'>You are here!</p>");
   } else {
     locationMarker.setLatLng(ll);
   }
@@ -157,7 +149,6 @@ function adjustAspectRatios(event) {
   const video = document.getElementById(VIDEO_ID);
   const canvas = document.getElementById(CANVAS_ID);
 
-  //perform a one-time adjustment of video's and photo's aspect ratio
   if (!streaming) {
     video.setAttribute("width", width);
     video.setAttribute("height", height);
@@ -166,38 +157,6 @@ function adjustAspectRatios(event) {
     canvas.setAttribute("height", height);
     streaming = true;
   }
-}
-
-function pauseVideoAndTakePicture(event) {
-  const video = document.getElementById(VIDEO_ID);
-  const photo = document.getElementById(PHOTO_ID);
-  const canvas = document.getElementById(CANVAS_ID);
-  const pauseButton = document.getElementById(PAUSE_INPUT_ID);
-  const playButton = document.getElementById(PLAY_INPUT_ID);
-  const saveButton = document.getElementById(SAVE_INPUT_ID);
-
-  video.pause();
-
-  const context = canvas.getContext("2d");
-  context.drawImage(video, 0, 0, video.width, video.height);
-  imageData = canvas.toDataURL("image/jpeg");
-  photo.setAttribute("src", imageData);
-
-  pauseButton.style.display = "none";
-  playButton.style.display = "inline";
-  saveButton.disabled = false;
-}
-
-function playVideo(event) {
-  const video = document.getElementById(VIDEO_ID);
-  const pauseButton = document.getElementById(PAUSE_INPUT_ID);
-  const playButton = document.getElementById(PLAY_INPUT_ID);
-  const saveButton = document.getElementById(SAVE_INPUT_ID);
-
-  video.play();
-  pauseButton.style.display = "inline";
-  playButton.style.display = "none";
-  saveButton.disabled = true;
 }
 
 function loadCameraPage(event) {
@@ -218,7 +177,7 @@ function loadCameraPage(event) {
   saveButton.src = saveImage;
   saveButton.style.display = "inline";
   saveButton.disabled = true;
-  saveButton.onclick = setImageMarkerAndLoadStartPage;
+  saveButton.onclick = saveImageAndSetImageMarker;
 
   const cancelButton = document.getElementById(CANCEL_INPUT_ID);
   cancelButton.src = cancelImage;
@@ -229,7 +188,6 @@ function loadCameraPage(event) {
   video.style.display = "block";
   video.addEventListener("canplay", adjustAspectRatios);
 
-  //start video playback
   navigator.mediaDevices
     .getUserMedia({ video: true, audio: false })
     .then((stream) => {
@@ -241,39 +199,75 @@ function loadCameraPage(event) {
     });
 }
 
-function setImageMarkerAndLoadStartPage() {
+function pauseVideoAndTakePicture(event) {
+  const video = document.getElementById(VIDEO_ID);
+  const photo = document.getElementById(PHOTO_ID);
+  const canvas = document.getElementById(CANVAS_ID);
+
+  const pauseButton = document.getElementById(PAUSE_INPUT_ID);
+  const playButton = document.getElementById(PLAY_INPUT_ID);
+  const saveButton = document.getElementById(SAVE_INPUT_ID);
+  pauseButton.style.display = "none";
+  playButton.style.display = "inline";
+  saveButton.disabled = false;
+
+  video.pause();
+
+  const context = canvas.getContext("2d");
+  context.drawImage(video, 0, 0, video.width, video.height);
+  imageData = canvas.toDataURL("image/jpeg");
+  photo.setAttribute("src", imageData);
+}
+
+function playVideo(event) {
+  const video = document.getElementById(VIDEO_ID);
+
+  const pauseButton = document.getElementById(PAUSE_INPUT_ID);
+  const playButton = document.getElementById(PLAY_INPUT_ID);
+  const saveButton = document.getElementById(SAVE_INPUT_ID);
+  pauseButton.style.display = "inline";
+  playButton.style.display = "none";
+  saveButton.disabled = true;
+
+  video.play();
+}
+
+function saveImageAndSetImageMarker() {
   const photo = document.getElementById(PHOTO_ID);
   const ll = [locationMarker.getLatLng().lat, locationMarker.getLatLng().lng];
-  const icon = L.icon({
-    iconUrl: ArrowUpCircle,
-    iconSize: [24, 24], // Size of the icon in pixels
-    iconAnchor: [12, 16], // The point of the icon that corresponds to the marker's location
-  });
-  imageMarker = L.marker(ll, { icon: icon }).addTo(map);
   data = photo.getAttribute("src");
-  
+
   let image = {image: data, location: ll} 
   images.push(image);
-  console.debug("her her", images)
   localStorage.setItem("photos", JSON.stringify(images));
 
+  setImageMarker(data, ll)
+  loadStartPage();
+}
+
+function setImageMarker(data, location) {
+  const icon = L.icon({
+    iconUrl: ArrowUpCircle,
+    iconSize: [24, 24],
+    iconAnchor: [12, 16],
+  });
+
+  let imageMarker = L.marker(location, { icon: icon }).addTo(map);
   imageMarker.bindPopup(
     `
     <div class="popup-image-container">
-        <img class="popup-image" src="${photo.getAttribute("src")}" alt="Image">
+        <img class="popup-image" src="${data}" alt="Image">
         <div class="popup-text-overlay">
-          ${COORD_FORMATTER.format(ll[0])} ${COORD_FORMATTER.format(ll[1])}
+          ${COORD_FORMATTER.format(location[0])} ${COORD_FORMATTER.format(location[1])}
         </div>
     </div>
     `
   );
-  loadStartPage();
 }
 
 function loadStartPage() {
   document.getElementById(MAP_ID).style.display = "block";
   document.getElementById(FOOTER_ID).style.display = "flex";
-
   document.getElementById(VIDEO_ID).style.display = "none";
   document.getElementById(PLAY_INPUT_ID).style.display = "none";
   document.getElementById(PAUSE_INPUT_ID).style.display = "none";
@@ -281,64 +275,34 @@ function loadStartPage() {
   document.getElementById(CANCEL_INPUT_ID).style.display = "none";
 }
 
-/* setup component */
+function loadImagesFromLocalStorage() {
+  let photos = localStorage.getItem("photos") ? JSON.parse(localStorage.getItem("photos")) : [];
+  images = photos;
+  for (const photo of photos) {
+    setImageMarker(photo.image, photo.location)
+  }
+}
+
 window.onload = () => {
   document.getElementById(VIDEO_ID).style.display = "none";
   document.getElementById(CANVAS_ID).style.display = "none";
   document.getElementById(PHOTO_ID).style.display = "none";
 
-  //init leaflet
   configureMap([47.406653, 9.744844]);
-
-  let photos = localStorage.getItem("photos") ? JSON.parse(localStorage.getItem("photos")) : [];
-  images = photos;
-  const icon = L.icon({
-    iconUrl: ArrowUpCircle,
-    iconSize: [24, 24], // Size of the icon in pixels
-    iconAnchor: [12, 16], // The point of the icon that corresponds to the marker's location
-  });
-
-  for (const photo of photos) {
-    m = L.marker(photo.location, { icon: icon }).addTo(map);
-    m.bindPopup(
-      `
-      <div class="popup-image-container">
-          <img class="popup-image" src="${photo.image}" alt="Image">
-          <div class="popup-text-overlay">
-            ${COORD_FORMATTER.format(photo.location[0])} ${COORD_FORMATTER.format(photo.location[1])}
-          </div>
-      </div>
-      `
-    );
-    // m.bindPopup(
-    //   `
-    //   <div class="popup-image-container">
-    //       <img class="popup-image" src="${photo.image}" alt="Image">
-    //       <div class="popup-text-overlay">
-    //         ${COORD_FORMATTER.format(photo.location[0])} ${COORD_FORMATTER.format(photo.location[1])}
-    //       </div>
-    //   </div>
-    //   `
-    // );
-  }
-
+  loadImagesFromLocalStorage()
   const cameraButton = document.getElementById(CAMERA_INPUT_ID);
   cameraButton.src = cameraImage;
   cameraButton.onclick = loadCameraPage;
 
-  //init footer
-  // updatePosition({ coords: { latitude: 47.406653, longitude: 9.744844, altitude: 440, accuracy: 40, heading: 45, speed: 1.8 } });
-
-  // setup service worker
-    if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.register(
-            new URL('serviceworker.js', import.meta.url),
-            { type: 'module' }
-        ).then(() => {
-            console.log('Service worker registered!');
-        }).catch((error) => {
-            console.warn('Error registering service worker:');
-            console.warn(error);
-        });
-    }
+  if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register(
+          new URL('serviceworker.js', import.meta.url),
+          { type: 'module' }
+      ).then(() => {
+          console.log('Service worker registered!');
+      }).catch((error) => {
+          console.warn('Error registering service worker:');
+          console.warn(error);
+      });
+  }
 };
