@@ -117,6 +117,8 @@ function updatePosition(position) {
         <dd>${
           coords.altitude ? DIST_FORMATTER.format(coords.altitude) : "-"
         }</dd>
+    </dl>
+    <dl>
         <dt>ACC</dt>
         <dd>${DIST_FORMATTER.format(coords.accuracy)}</dd>
         <dt>HEAD</dt>
@@ -149,17 +151,13 @@ function updatePosition(position) {
 var streaming = false;
 
 function adjustAspectRatios(event) {
-  let width = 640;
-  let height = 0;
+  const width = 320;
+  const height = 240;
   const video = document.getElementById(VIDEO_ID);
   const canvas = document.getElementById(CANVAS_ID);
 
   //perform a one-time adjustment of video's and photo's aspect ratio
   if (!streaming) {
-    height = (video.videoHeight / video.videoWidth) * width;
-    if (isNaN(height)) {
-      height = (width * 3.0) / 4.0;
-    }
     video.setAttribute("width", width);
     video.setAttribute("height", height);
     video.setAttribute("position", "center");
