@@ -6,6 +6,7 @@ import cancelImage from "./x-circle.svg";
 import locationIcon from "./icons/location.png";
 import ArrowUpCircle from "./arrow-up-circle.svg";
 
+
 const COORD_FORMATTER = Intl.NumberFormat("de-DE", {
   minimumFractionDigits: 6,
   maximumFractionDigits: 6,
@@ -215,7 +216,7 @@ function pauseVideoAndTakePicture(event) {
 
   const context = canvas.getContext("2d");
   context.drawImage(video, 0, 0, video.width, video.height);
-  imageData = canvas.toDataURL("image/jpeg");
+  let imageData = canvas.toDataURL("image/jpeg");
   photo.setAttribute("src", imageData);
 }
 
@@ -235,7 +236,7 @@ function playVideo(event) {
 function saveImageAndSetImageMarker() {
   const photo = document.getElementById(PHOTO_ID);
   const ll = [locationMarker.getLatLng().lat, locationMarker.getLatLng().lng];
-  data = photo.getAttribute("src");
+  let data = photo.getAttribute("src");
 
   let image = {image: data, location: ll} 
   images.push(image);
