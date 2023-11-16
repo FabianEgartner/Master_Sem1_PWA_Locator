@@ -230,7 +230,7 @@ function drawLocationStamp(context) {
   context.fillStyle = 'black';
   context.font = "12px Arial";
   context.textAlign = "center"; 
-  text = `${COORD_FORMATTER.format(ll[0])} ${COORD_FORMATTER.format(ll[1])}`
+  let text = `${COORD_FORMATTER.format(ll[0])} ${COORD_FORMATTER.format(ll[1])}`
   context.fillText(text, 160, 231);
 }
 
