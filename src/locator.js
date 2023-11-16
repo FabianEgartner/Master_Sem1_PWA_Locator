@@ -216,8 +216,22 @@ function pauseVideoAndTakePicture(event) {
 
   const context = canvas.getContext("2d");
   context.drawImage(video, 0, 0, video.width, video.height);
+  drawLocationStamp(context);
   let imageData = canvas.toDataURL("image/jpeg");
   photo.setAttribute("src", imageData);
+}
+
+function drawLocationStamp(context) {
+  const ll = [locationMarker.getLatLng().lat, locationMarker.getLatLng().lng];
+
+  context.fillStyle = 'rgba(255, 255, 255, 0.5)';
+  context.fillRect(80, 215, 160, 240);
+
+  context.fillStyle = 'black';
+  context.font = "12px Arial";
+  context.textAlign = "center"; 
+  text = `${COORD_FORMATTER.format(ll[0])} ${COORD_FORMATTER.format(ll[1])}`
+  context.fillText(text, 160, 231);
 }
 
 function playVideo(event) {
@@ -258,9 +272,6 @@ function setImageMarker(data, location) {
     `
     <div class="popup-image-container">
         <img class="popup-image" src="${data}" alt="Image">
-        <div class="popup-text-overlay">
-          ${COORD_FORMATTER.format(location[0])} ${COORD_FORMATTER.format(location[1])}
-        </div>
     </div>
     `
   );
